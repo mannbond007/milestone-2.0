@@ -1,0 +1,134 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+enum Role {
+  STUDENT
+  ADMIN
+  COUNSELOR
+}
+
+enum ApplicationStatus {
+  DRAFT
+  SUBMITTED
+  UNDER_REVIEW
+  APPROVED
+  REJECTED
+}
+
+model User {
+  id            String         @id @default(cuid())
+  clerkId       String         @unique
+  name          String
+  email         String         @unique
+  role          Role           @default(STUDENT)
+  phone         String?
+  avatar        String?
+  createdAt     DateTime       @default(now())
+  updatedAt     DateTime       @updatedAt
+  applications  Application[]
+  notifications Notification[]
+
+  @@index([clerkId])
+  @@index([email])
+}
+
+model Scholarship {
+  id           String        @id @default(cuid())
+  title        String
+  slug         String        @unique
+  amount       String
+  eligibility  String
+  description  String        @db.Text
+  category     String
+  deadline     DateTime?
+  isActive     Boolean       @default(true)
+  createdAt    DateTime      @default(now())
+  updatedAt    DateTime      @updatedAt
+  applications Application[]
+
+  @@index([category])
+  @@index([slug])
+}
+
+model Application {
+  id             String            @id @default(cuid())
+  userId         String
+  scholarshipId  String
+  fullName       String
+  fatherName     String
+  motherName     String
+  dob            DateTime
+  gender         String
+  phone          String
+  address        String            @db.Text
+  state          String
+  city           String
+  pincode        String
+  category       String
+  tenthMarks     Float
+  twelfthMarks   Float?
+  lastExamMarks  Float?
+  collegeName    String?
+  courseName     String?
+  yearOfStudy    String?
+  aadhaarDoc     String?
+  marksheetDoc   String?
+  photoDoc       String?
+  certificateDoc String?
+  status         ApplicationStatus @default(DRAFT)
+  adminNotes     String?           @db.Text
+  submittedAt    DateTime?
+  createdAt      DateTime          @default(now())
+  updatedAt      DateTime          @updatedAt
+  user           User              @relation(fields: [userId], references: [id], onDelete: Cascade)
+  scholarship    Scholarship       @relation(fields: [scholarshipId], references: [id])
+
+  @@index([userId])
+  @@index([scholarshipId])
+  @@index([status])
+}
+
+model Exam {
+  id           String   @id @default(cuid())
+  title        String
+  examDate     DateTime
+  duration     Int // in minutes
+  instructions String   @db.Text
+  syllabus     String?  @db.Text
+  isActive     Boolean  @default(true)
+  createdAt    DateTime @default(now())
+  updatedAt    DateTime @updatedAt
+}
+
+model Notification {
+  id        String   @id @default(cuid())
+  userId    String
+  title     String
+  message   String   @db.Text
+  isRead    Boolean  @default(false)
+  createdAt DateTime @default(now())
+  user      User     @relation(fields: [userId], references: [id], onDelete: Cascade)
+
+  @@index([userId])
+}
+
+model Blog {
+  id         String   @id @default(cuid())
+  title      String
+  slug       String   @unique
+  content    String   @db.Text
+  excerpt    String?
+  coverImage String?
+  author     String   @default("Admin")
+  published  Boolean  @default(false)
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@index([slug])
+}
